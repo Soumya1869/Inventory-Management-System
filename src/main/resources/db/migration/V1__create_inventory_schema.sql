@@ -128,6 +128,32 @@ CREATE TABLE role_log (
     PRIMARY KEY (role_id)
 ) ENGINE=InnoDB;
 
+CREATE TABLE supplier (
+    supplier_id INT NOT NULL AUTO_INCREMENT,
+    created_date_time DATETIME(6),
+    created_user VARCHAR(255),
+    last_modified_date_time DATETIME(6),
+    last_modified_user VARCHAR(255),
+    supplier_company VARCHAR(255),
+    supplier_contact DECIMAL(38, 2),
+    supplier_name VARCHAR(255),
+    version DECIMAL(38, 2),
+    PRIMARY KEY (supplier_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE supplier_log (
+    supplier_id INT NOT NULL AUTO_INCREMENT,
+    created_date_time DATETIME(6),
+    created_user VARCHAR(255),
+    last_modified_date_time DATETIME(6),
+    last_modified_user VARCHAR(255),
+    supplier_company VARCHAR(255),
+    supplier_contact DECIMAL(38, 2),
+    supplier_name VARCHAR(255),
+    version DECIMAL(38, 2),
+    PRIMARY KEY (supplier_id)
+) ENGINE=InnoDB;
+
 CREATE TABLE stock (
     ref_id INT NOT NULL AUTO_INCREMENT,
     branch_id VARCHAR(255),
@@ -160,32 +186,6 @@ CREATE TABLE stock_log (
     supplier_id INT NOT NULL,
     version DECIMAL(38, 2),
     PRIMARY KEY (ref_id)
-) ENGINE=InnoDB;
-
-CREATE TABLE supplier (
-    supplier_id INT NOT NULL AUTO_INCREMENT,
-    created_date_time DATETIME(6),
-    created_user VARCHAR(255),
-    last_modified_date_time DATETIME(6),
-    last_modified_user VARCHAR(255),
-    supplier_company VARCHAR(255),
-    supplier_contact DECIMAL(38, 2),
-    supplier_name VARCHAR(255),
-    version DECIMAL(38, 2),
-    PRIMARY KEY (supplier_id)
-) ENGINE=InnoDB;
-
-CREATE TABLE supplier_log (
-    supplier_id INT NOT NULL AUTO_INCREMENT,
-    created_date_time DATETIME(6),
-    created_user VARCHAR(255),
-    last_modified_date_time DATETIME(6),
-    last_modified_user VARCHAR(255),
-    supplier_company VARCHAR(255),
-    supplier_contact DECIMAL(38, 2),
-    supplier_name VARCHAR(255),
-    version DECIMAL(38, 2),
-    PRIMARY KEY (supplier_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE `user` (
