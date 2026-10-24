@@ -45,7 +45,13 @@ A Spring Boot 3.4.2 inventory API built with Java 21, Spring Security, JWT, MySQ
 - API: `http://localhost:8081`
 - MySQL: `localhost:3307`
 
-Stop the application with `docker compose down`. The local JPA setting uses non-destructive `update`; use `JPA_DDL_AUTO=validate` in production after a versioned schema migration has been applied.
+Stop the application with `docker compose down`.
+
+## Database migrations
+
+Flyway applies versioned SQL from `src/main/resources/db/migration` at startup. A fresh database receives the initial schema from `V1__create_inventory_schema.sql`. Hibernate uses `validate` and fails startup if the database does not match the entity mappings; it no longer creates or alters tables automatically.
+
+For a non-empty database without Flyway history, Flyway baselines it at version 1 and Hibernate validates it. Back up an existing database before upgrading. If validation fails, stop and reconcile the existing schema with the JPA model before retrying. The checked-in `db.sql` is a legacy export for a different schema and is not used for application setup.
 
 ## Run locally
 
