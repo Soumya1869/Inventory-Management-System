@@ -1,46 +1,64 @@
-# Inventory Management System (Spring Boot)
+# Inventory Management System
 
-A modern inventory management system built with Spring Boot 3.4.2, Java 21, and Spring Security with JWT.
+A Spring Boot 3.4.2 inventory API built with Java 21, Spring Security, JWT, MySQL, and Docker Compose.
 
-## High-Level Setup
+## Prerequisites
 
-### 1. Prerequisites
-*   Docker and Docker Compose installed.
-*   Java 21 and Maven (if running locally).
+- Docker and Docker Compose
+- Java 21 and Maven (for running outside Docker)
+- OpenSSL (to generate a JWT signing key)
 
-### 2. Running with Docker (Recommended)
-This is the fastest way to get the system up and running with all dependencies (MySQL & App).
+## Run with Docker
 
-**To start the application:**
+1. Copy the example environment file and replace the placeholders:
+
+   **macOS/Linux/Git Bash**
+   ```bash
+   cp .env.example .env
+   ```
+
+   **Windows PowerShell**
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+2. Generate a fresh JWT signing key and place its output in `JWT_SECRET` in `.env`:
+
+   ```bash
+   openssl rand -base64 64
+   ```
+
+   Set unique strong values for `MYSQL_ROOT_PASSWORD` and `DB_PASSWORD` too. Do not commit `.env`. If you used a previously published password anywhere, rotate it.
+
+3. Start the application:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+4. Check the application log:
+
+   ```bash
+   docker logs -f inventory-app
+   ```
+
+- API: `http://localhost:8081`
+- MySQL: `localhost:3307`
+
+Stop the application with `docker compose down`. The local JPA setting uses non-destructive `update`; use `JPA_DDL_AUTO=validate` in production after a versioned schema migration has been applied.
+
+## Run locally
+
+Provide `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `JWT_SECRET` in your environment, then run:
+
 ```bash
-docker compose up -d --build
+./mvnw spring-boot:run
 ```
 
-**Verify the application is running:**
-```bash
-docker logs -f inventory-app
-```
+## Authentication
 
-**Access Points:**
-*   **API URL**: `http://localhost:8081`
-*   **Database (MySQL)**: `localhost:3307` (Credentials: `root` / `egxduvwz`)
+- Register: `POST /auth/register`
+- Login: `POST /auth/login` (returns a JWT)
+- Send `Authorization: Bearer <token>` to protected endpoints.
 
-**To stop the application:**
-```bash
-docker compose down
-```
-
-### 3. Running Locally
-1.  **Database**: Ensure a MySQL instance is running.
-2.  **Configure**: Update `src/main/resources/application.properties` or set environment variables (`DB_HOST`, `DB_USER`, etc.).
-3.  **Build & Run**:
-    ```bash
-    ./mvnw clean spring-boot:run
-    ```
-
-### 4. Authentication
-*   **Register**: `POST /auth/register` (Send User JSON)
-*   **Login**: `POST /auth/login` (Returns JWT token)
-*   **Secure API**: Add `Authorization: Bearer <token>` to your headers.
-
-
+Registration accepts only profile fields; it does not accept role assignments or persistence metadata. Passwords must contain at least 12 characters. The registration response omits the password.

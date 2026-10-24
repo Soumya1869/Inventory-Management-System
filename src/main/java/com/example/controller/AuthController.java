@@ -2,10 +2,14 @@ package com.example.controller;
 
 import com.example.dto.AuthRequest;
 import com.example.dto.AuthResponse;
+import com.example.dto.RegisterRequest;
+import com.example.dto.UserResponse;
 import com.example.entity.User;
 import com.example.repository.UserRepository;
 import com.example.security.JwtTokenUtil;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,9 +38,7 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authenticationRequest)
-            throws Exception {
-
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authenticationRequest) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(),
                         authenticationRequest.getPassword()));
@@ -50,8 +52,22 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> saveUser(@RequestBody User user) throws Exception {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return ResponseEntity.ok(userRepository.save(user));
+    public ResponseEntity<UserResponse> saveUser(@Valid @RequestBody RegisterRequest request) {
+        User user = new User();
+        user.setUserName(request.userName());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setUserEmail(request.userEmail());
+        user.setUserFname(request.userFname());
+        user.setUserLname(request.userLname());
+
+        User savedUser = userRepository.save(user);
+        UserResponse response = new UserResponse(
+                savedUser.getUserId(),
+                savedUser.getUserName(),
+                savedUser.getUserEmail(),
+                savedUser.getUserFname(),
+                savedUser.getUserLname());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }

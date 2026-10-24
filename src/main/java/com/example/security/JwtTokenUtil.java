@@ -2,8 +2,9 @@ package com.example.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.io.Decoders;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,11 @@ public class JwtTokenUtil implements Serializable {
     private static final long serialVersionUID = -2550185165626007488L;
     public static final long JWT_TOKEN_VALIDITY = 5 * 60 * 60;
 
-    private Key secret = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private final Key secret;
+
+    public JwtTokenUtil(@Value("${app.jwt.secret}") String base64Secret) {
+        this.secret = Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret));
+    }
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
