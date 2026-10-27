@@ -29,6 +29,70 @@ function EyeIcon({ hidden }: { hidden: boolean }) {
   );
 }
 
+
+type DashboardProduct = { productId: number; productName: string; categoryName: string; quantityOnHand: number; lowStock: boolean };
+type DashboardSummary = { productCount: number; totalStockUnits: number; lowStockThreshold: number; lowStockCount: number; products: DashboardProduct[] };
+
+function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void }) {
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  async function loadDashboard() {
+    setLoading(true); setLoadError("");
+    try {
+      const response = await fetch(apiBaseUrl + "/dashboard/summary", { headers: { Authorization: "Bearer " + token } });
+      if (response.status === 401 || response.status === 403) { onSignOut(); return; }
+      if (!response.ok) throw new Error("Dashboard unavailable");
+      setSummary((await response.json()) as DashboardSummary);
+    } catch { setLoadError("We couldn't load your inventory. Check the API connection and try again."); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { void loadDashboard(); }, [token]);
+  const lowStockProducts = summary?.products.filter((product) => product.lowStock) ?? [];
+  return (
+    <main className="dashboard-page">
+      <header className="dashboard-header">
+        <div className="dashboard-brand"><BrandMark /><span className="brand-name">Stockroom</span></div>
+        <div className="dashboard-header-right"><span className="dashboard-session"><span />Inventory workspace</span><button className="dashboard-signout" type="button" onClick={onSignOut}>Sign out</button></div>
+      </header>
+      <section className="dashboard-content">
+        <div className="dashboard-title-row"><div><span className="form-eyebrow">OVERVIEW</span><h1>Your inventory</h1><p>A clear view of your products and the stock on hand.</p></div>
+          <button className="refresh-button" type="button" onClick={() => void loadDashboard()} disabled={loading}><span aria-hidden="true">↻</span> Refresh</button>
+        </div>
+        {loadError && <div className="dashboard-error" role="alert">{loadError}</div>}
+        {loading && !summary ? <div className="dashboard-loading" role="status"><span className="spinner dashboard-spinner" /> Loading your inventory…</div> : summary ? <>
+          <div className="metric-grid">
+            <article className="metric-card"><span className="metric-label">PRODUCTS</span><strong>{summary.productCount.toLocaleString()}</strong><span className="metric-note">Inventory items tracked</span></article>
+            <article className="metric-card metric-card-stock"><span className="metric-label">TOTAL STOCK</span><strong>{summary.totalStockUnits.toLocaleString()}</strong><span className="metric-note">Units currently on hand</span></article>
+            <article className={"metric-card " + (summary.lowStockCount ? "metric-card-alert" : "")}><span className="metric-label">LOW STOCK</span><strong>{summary.lowStockCount.toLocaleString()}</strong><span className="metric-note">Below {summary.lowStockThreshold} units</span></article>
+          </div>
+          <div className="dashboard-panels">
+            <section className="inventory-panel">
+              <div className="panel-heading"><div><h2>Products</h2><p>{summary.productCount} items in your inventory</p></div><span className="panel-count">{summary.productCount}</span></div>
+              {summary.products.length === 0 ? <div className="empty-state"><span className="empty-icon">□</span><strong>No products yet</strong><p>Products will appear here when they are added to your inventory.</p></div> :
+                <div className="table-scroll"><table className="product-table"><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>ON HAND</th><th>STATUS</th></tr></thead><tbody>
+                  {summary.products.map((product) => <tr key={product.productId}>
+                    <td><span className="product-avatar">{(product.productName || "?").slice(0, 1).toUpperCase()}</span><span className="product-name">{product.productName || "Unnamed product"}</span></td>
+                    <td className="category-cell">{product.categoryName || "Uncategorized"}</td><td className="quantity-cell">{product.quantityOnHand.toLocaleString()} <span>units</span></td>
+                    <td><span className={"stock-badge " + (product.lowStock ? "stock-badge-low" : "stock-badge-ok")}><i />{product.lowStock ? "Low stock" : "In stock"}</span></td>
+                  </tr>)}
+                </tbody></table></div>}
+            </section>
+            <aside className="low-stock-panel">
+              <div className="low-stock-heading"><span className="low-stock-symbol">!</span><div><h2>Needs attention</h2><p>Products below {summary.lowStockThreshold} units</p></div></div>
+              {lowStockProducts.length === 0 ? <div className="low-stock-clear"><span>✓</span><strong>All stocked up</strong><p>No products are below the low-stock threshold.</p></div> :
+                <ul className="low-stock-list">{lowStockProducts.map((product) => <li key={product.productId}>
+                  <span className="low-product-initial">{(product.productName || "?").slice(0, 1).toUpperCase()}</span><span className="low-product-copy"><strong>{product.productName || "Unnamed product"}</strong><small>{product.categoryName || "Uncategorized"}</small></span><span className="low-product-quantity">{product.quantityOnHand}<small>left</small></span>
+                </li>)}</ul>}
+            </aside>
+          </div>
+        </> : null}
+      </section>
+      <footer className="dashboard-footer"><span>© {new Date().getFullYear()} Stockroom</span><span>INVENTORY MANAGEMENT</span></footer>
+    </main>
+  );
+}
+
 export default function App() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -84,6 +148,10 @@ export default function App() {
     sessionStorage.removeItem("inventory.jwt");
     setSignedIn(false);
     setPassword("");
+  }
+
+  if (signedIn) {
+    return <Dashboard token={sessionStorage.getItem("inventory.jwt") || ""} onSignOut={handleSignOut} />;
   }
 
   return (
