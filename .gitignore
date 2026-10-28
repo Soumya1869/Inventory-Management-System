@@ -1,10 +1,10 @@
-target/
+backend/target/
+frontend/node_modules/
+frontend/dist/
 .env
 .env.*
 !.env.example
-frontend/node_modules/
-frontend/dist/
-!.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.jar
 
 ### STS ###
 .apt_generated

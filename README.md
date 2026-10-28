@@ -1,70 +1,55 @@
 # Inventory Management System
 
-A Spring Boot 3.4.2 inventory API built with Java 21, Spring Security, JWT, MySQL, and Docker Compose.
+A full-stack inventory management application with a Spring Boot API and a React frontend.
+
+## Project structure
+
+- `backend/` — Spring Boot 3.4.2 API, Java 21, Maven, Spring Security, JWT, MySQL, and Flyway.
+- `frontend/` — React, TypeScript, and Vite sign-in page and inventory dashboard.
+- `docker-compose.yml` — runs the API and MySQL from the repository root.
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- Java 21 and Maven (for running outside Docker)
-- OpenSSL (to generate a JWT signing key)
+- Node.js 20.19+ (or 22.12+) for the frontend
+- Java 21 (for running the backend outside Docker)
+- OpenSSL to generate a JWT signing key
 
 ## Run with Docker
 
-1. Copy the example environment file and replace the placeholders:
+1. Copy `.env.example` to `.env` and replace the placeholders. Set unique strong values for `MYSQL_ROOT_PASSWORD` and `DB_PASSWORD`; do not commit `.env`.
 
-   **macOS/Linux/Git Bash**
-   ```bash
-   cp .env.example .env
-   ```
-
-   **Windows PowerShell**
+   PowerShell:
    ```powershell
    Copy-Item .env.example .env
    ```
 
-2. Generate a fresh JWT signing key and place its output in `JWT_SECRET` in `.env`:
-
+   macOS/Linux/Git Bash:
    ```bash
-   openssl rand -base64 64
+   cp .env.example .env
    ```
 
-   Set unique strong values for `MYSQL_ROOT_PASSWORD` and `DB_PASSWORD` too. Do not commit `.env`. If you used a previously published password anywhere, rotate it.
+2. Generate a signing key with `openssl rand -base64 64` and place it in `JWT_SECRET`.
 
-3. Start the application:
-
+3. Start both services from the repository root:
    ```bash
    docker compose up -d --build
    ```
 
-4. Check the application log:
-
-   ```bash
-   docker logs -f inventory-app
-   ```
-
-- API: `http://localhost:8081`
-- MySQL: `localhost:3307`
-
-Stop the application with `docker compose down`.
-
-## Database migrations
-
-Flyway applies versioned SQL from `src/main/resources/db/migration` at startup. A fresh database receives the initial schema from `V1__create_inventory_schema.sql`. Hibernate uses `validate` and fails startup if the database does not match the entity mappings; it no longer creates or alters tables automatically.
-
-For a non-empty database without Flyway history, Flyway baselines it at version 1 and Hibernate validates it. Back up an existing database before upgrading. If validation fails, stop and reconcile the existing schema with the JPA model before retrying. The checked-in `db.sql` is a legacy export for a different schema and is not used for application setup.
+The API is available at `http://localhost:8081`; MySQL is available at `localhost:3307`. Stop the services with `docker compose down`.
 
 ## Run locally
 
-Provide `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, and `JWT_SECRET` in your environment, then run:
+See [backend/README.md](backend/README.md) for running the API and [frontend/README.md](frontend/README.md) for the UI. Start the API on port 8081 for the Vite development proxy, or update `frontend/.env.local` to use another API URL.
 
-```bash
-./mvnw spring-boot:run
-```
+## Database migrations
+
+Flyway migrations are in `backend/src/main/resources/db/migration`. Hibernate validates the schema at startup and does not create or alter tables automatically. The checked-in `backend/db.sql` is a legacy export for a different schema and is not used for application setup.
 
 ## Authentication
 
 - Register: `POST /auth/register`
 - Login: `POST /auth/login` (returns a JWT)
-- Send `Authorization: Bearer <token>` to protected endpoints.
+- Protected API requests require `Authorization: Bearer <token>`.
 
-Registration accepts only profile fields; it does not accept role assignments or persistence metadata. Passwords must contain at least 12 characters. The registration response omits the password.
+Registration accepts profile fields only, does not accept role assignments or persistence metadata, requires passwords of at least 12 characters, and omits the password from its response.
